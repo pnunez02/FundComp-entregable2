@@ -44,29 +44,60 @@ cmusica = C "musica" [cjazz, crock, A ("clara", Mp3)]
 -- Completar el resto de los componentes del FS
 
 cort :: FS
-cort = undefined
+cort = C "ort" [cobls,A("Notas",Txt)]
 
 cobls :: FS
-cobls = undefined
+cobls = C "obls" [A("p2",Txt),A("p2",Jar),A("fc",Hs)]
 
 csys :: FS
-csys = undefined
+csys = C "sys" [A("sys",Txt), C "sys" []]
 
 craiz :: FS
-craiz = undefined
+craiz = C "raiz" [cmusica, A("Notas",Txt), cort, csys]
 
 ----
+ext_munuscula :: Ext -> String
+ext_munuscula = \ e -> case e of{
+  Txt-> "txt";
+  Mp3 -> "mp3";
+  Jar -> "jar";
+  Doc -> "doc";
+  Hs -> "hs";
+  -- _ -> "unknown" no es necesario
+}
+
 -- 2
 nombre :: FS -> Nombre
-nombre = undefined
+nombre = \ fs -> case fs of {
+  A(nombre, ext) -> nombre ++ "." ++ (ext_munuscula ext);
+  C s l -> s
+}
+
 ----
 -- 3
 contenido :: FS -> [Nombre]
-contenido = undefined
+contenido = \ fs -> case fs of {
+  A(n,e) -> error "no es una carpeta";
+  C s l -> case l of {
+    [] -> [];
+    x:xs -> (nombre x):(contenido (C "aux" xs))      -- Esta bien asi o es una chanchada?
+  }
+}
+
 ----
 -- 4
 cantA :: FS -> Int 
-cantA = undefined
+cantA = \ fs -> case fs of {
+  A(n,e) -> 1;
+  C s l -> case l of {
+    [] -> 0;
+    x :xs -> case x of{
+      A(n2,e2) -> 1 + cantA (C "aux" xs);  -- Esta bien asi o es una chanchada?
+      C s l -> cantA (C s l)+cantA (C "aux" xs)      -- Esta bien asi o es una chanchada?
+    }
+  }
+}
+
 ----
 -- 5
 pertenece :: Nombre -> FS -> Bool 
