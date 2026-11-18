@@ -100,12 +100,48 @@ cantA = \ fs -> case fs of {
 
 ----
 -- 5
-pertenece :: Nombre -> FS -> Bool 
-pertenece = undefined
+
+-- La búsqueda de archivos usa el nombre sin la extensión.
+pertenece :: Nombre -> FS -> Bool
+pertenece = \ n fs -> case fs of {
+  A(s, _) -> n == s;
+  C s l -> n == s || perteneceLista n l
+}
+
+perteneceLista :: Nombre -> [FS] -> Bool
+perteneceLista = \ n l -> case l of {
+  [] -> False;
+  x : xs -> pertenece n x || perteneceLista n xs
+}
 ----
 -- 6
+
 valido :: FS -> Bool
-valido = undefined
+valido = \ fs -> case fs of {
+  A(_, _) -> True;
+  C _ l -> validoLista l
+}
+
+-- Los conflictos se buscan entre hermanos. valido x revisa el interior de cada hijo.
+validoLista :: [FS] -> Bool
+validoLista = \ l -> case l of {
+  [] -> True;
+  x : xs -> sinConflictoConLista x xs && valido x && validoLista xs
+}
+
+sinConflictoConLista :: FS -> [FS] -> Bool
+sinConflictoConLista = \ x l -> case l of {
+  [] -> True;
+  y : ys -> sinConflicto x y && sinConflictoConLista x ys
+}
+
+sinConflicto :: FS -> FS -> Bool
+sinConflicto = \ x y -> case (x, y) of {  
+  (A(n1, e1), A(n2, e2)) -> n1 /= n2 || e1 /= e2;
+  (C s1 _, C s2 _) -> s1 /= s2;
+  _ -> True
+}
+
 ----
 -- 7
 archivosExt :: Ext -> FS -> [Nombre]
