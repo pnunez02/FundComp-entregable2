@@ -8,8 +8,8 @@ import Prelude
 -- Nombre: Estudiante 1
 -- Número: Estudiante 1
 
--- Nombre: Estudiante 2
--- Número: Estudiante 2
+-- Nombre: Rafael Menendez
+-- Número: 391040
 
 ---------
 --DATAS--
@@ -56,8 +56,8 @@ craiz :: FS
 craiz = C "raiz" [cmusica, A("notas",Txt), cort, csys]
 
 ----
-ext_munuscula :: Ext -> String
-ext_munuscula = \ e -> case e of{
+extMinuscula :: Ext -> String
+extMinuscula = \ e -> case e of{
   Txt-> "txt";
   Mp3 -> "mp3";
   Jar -> "jar";
@@ -69,7 +69,7 @@ ext_munuscula = \ e -> case e of{
 -- 2
 nombre :: FS -> Nombre
 nombre = \ fs -> case fs of {
-  A(nombre, ext) -> nombre ++ "." ++ (ext_munuscula ext);
+  A(nombre, ext) -> nombre ++ "." ++ extMinuscula ext;
   C s l -> s
 }
 
@@ -80,7 +80,7 @@ contenido = \ fs -> case fs of {
   A(n,e) -> error "no es una carpeta";
   C s l -> case l of {
     [] -> [];
-    x:xs -> (nombre x):(contenido (C "aux" xs))      -- Esta bien asi o es una chanchada?
+    x:xs -> nombre x:contenido (C "aux" xs)      -- Esta bien asi o es una chanchada?
   }
 }
 
@@ -147,11 +147,11 @@ sinConflicto = \ x y -> case (x, y) of {
 archivosExt :: Ext -> FS -> [Nombre]
 archivosExt = \ ext fs -> case fs of {
   A(s, e) -> case ext == e of {
-      True -> [s];
+      True -> [s];  
       False -> []
     };
   C _ l -> archivosExtLista ext l
-}
+} 
 
 archivosExtLista :: Ext -> [FS] -> [Nombre]
 archivosExtLista = \ ext l -> case l of {
@@ -170,14 +170,14 @@ cambiarNom =  \ viejo nuevo fs -> case fs of {
   C s l -> case s == viejo of {
     True -> C nuevo (cambiarNomLista viejo nuevo l);
     False -> C s (cambiarNomLista viejo nuevo l)
-  }
+  } 
 }
 
 cambiarNomLista :: Nombre -> Nombre -> [FS] -> [FS]
 cambiarNomLista = \ viejo nuevo l -> case l of {
   [] -> [];
   x : xs -> cambiarNom viejo nuevo x : cambiarNomLista viejo nuevo xs
-}
+} 
 
 ----
 -- 9
@@ -198,8 +198,21 @@ nivelesCLista = \ l -> case l of {
 
 ----
 -- 10
-borrar :: Nombre -> FS -> FS 
-borrar = undefined
+borrar :: Nombre -> FS -> FS
+borrar = \ n fs -> case fs of {
+  A (_, _) -> fs;
+  C s l -> C s (borrarLista n l)
+}
+
+borrarLista :: Nombre -> [FS] -> [FS]
+borrarLista = \ n l -> case l of {
+  [] -> [];
+  x : xs -> case nombre x == n of {
+    True -> borrarLista n xs;
+    False -> borrar n x : borrarLista n xs
+  }
+}
+
 ----
 -- 11
 ordenar :: FS-> FS
