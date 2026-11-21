@@ -1,12 +1,12 @@
-{-#LANGUAGE GADTs #-}
+{-# LANGUAGE GADTs #-}
 {-# OPTIONS_GHC -fno-warn-tabs #-}
 
-module FS where 
+module FS where
 
 import Prelude
 
--- Nombre: Estudiante 1
--- Número: Estudiante 1
+-- Nombre: Patricio Nuñez Echeverría
+-- Número: 398434
 
 -- Nombre: Rafael Menendez
 -- Número: 391040
@@ -15,50 +15,55 @@ import Prelude
 --DATAS--
 ---------
 
-type Nombre = String 
+type Nombre = String
 
-data Ext where { Txt::Ext ; Mp3::Ext ; Jar::Ext ; Doc::Ext ; Hs::Ext }
+data Ext where {
+  Txt :: Ext;
+  Mp3 :: Ext;
+  Jar :: Ext;
+  Doc :: Ext;
+  Hs :: Ext
+}
   deriving (Eq, Show)
 
-
-data FS where {  A :: (Nombre,Ext) -> FS;
-                 C :: Nombre -> [FS] -> FS }
+data FS where {
+  A :: (Nombre, Ext) -> FS;
+  C :: Nombre -> [FS] -> FS
+}
   deriving (Eq, Show)
-	
-  
+
 --------------
 --EJERCICIOS--
 --------------
 
 -- 1
-cjazz :: FS 
+cjazz :: FS
 cjazz = C "jazz" [A ("mumbles", Mp3)]
 
-crock :: FS 
-crock = C "rock" [ A ("clones", Mp3), A ("bajan", Mp3), A ("clara", Mp3)]
+crock :: FS
+crock = C "rock" [A ("clones", Mp3), A ("bajan", Mp3), A ("clara", Mp3)]
 
 cmusica :: FS
 cmusica = C "musica" [cjazz, crock, A ("clara", Mp3)]
 
-
 -- Completar el resto de los componentes del FS
 
 cort :: FS
-cort = C "ort" [cobls,A("notas",Txt)]
+cort = C "ort" [cobls, A ("notas", Txt)]
 
 cobls :: FS
-cobls = C "obls" [A("p2",Txt),A("p2",Jar),A("fc",Hs)]
+cobls = C "obls" [A ("p2", Txt), A ("p2", Jar), A ("fc", Hs)]
 
 csys :: FS
-csys = C "sys" [A("sys",Txt), C "sys" []]
+csys = C "sys" [A ("sys", Txt), C "sys" []]
 
 craiz :: FS
-craiz = C "raiz" [cmusica, A("notas",Txt), cort, csys]
+craiz = C "raiz" [cmusica, A ("notas", Txt), cort, csys]
 
 ----
 extMinuscula :: Ext -> String
-extMinuscula = \ e -> case e of{
-  Txt-> "txt";
+extMinuscula = \e -> case e of {
+  Txt -> "txt";
   Mp3 -> "mp3";
   Jar -> "jar";
   Doc -> "doc";
@@ -68,32 +73,32 @@ extMinuscula = \ e -> case e of{
 
 -- 2
 nombre :: FS -> Nombre
-nombre = \ fs -> case fs of {
-  A(nombre, ext) -> nombre ++ "." ++ extMinuscula ext;
+nombre = \fs -> case fs of {
+  A (nombre, ext) -> nombre ++ "." ++ extMinuscula ext;
   C s l -> s
 }
 
 ----
 -- 3
 contenido :: FS -> [Nombre]
-contenido = \ fs -> case fs of {
-  A(n,e) -> error "no es una carpeta";
+contenido = \fs -> case fs of {
+  A (n, e) -> error "no es una carpeta";
   C s l -> case l of {
     [] -> [];
-    x:xs -> nombre x:contenido (C "aux" xs)      -- Esta bien asi o es una chanchada?
+    x : xs -> nombre x : contenido (C "aux" xs) -- Esta bien asi o es una chanchada?
   }
 }
 
 ----
 -- 4
-cantA :: FS -> Int 
-cantA = \ fs -> case fs of {
-  A(n,e) -> 1;
+cantA :: FS -> Int
+cantA = \fs -> case fs of {
+  A (n, e) -> 1;
   C s l -> case l of {
     [] -> 0;
-    x :xs -> case x of{
-      A(n2,e2) -> 1 + cantA (C "aux" xs);  -- Esta bien asi o es una chanchada?
-      C s l -> cantA (C s l)+cantA (C "aux" xs)      -- Esta bien asi o es una chanchada?
+    x : xs -> case x of {
+      A (n2, e2) -> 1 + cantA (C "aux" xs); -- Esta bien asi o es una chanchada?
+      C s l -> cantA (C s l) + cantA (C "aux" xs) -- Esta bien asi o es una chanchada?
     }
   }
 }
@@ -103,41 +108,42 @@ cantA = \ fs -> case fs of {
 
 -- La búsqueda de archivos usa el nombre sin la extensión.
 pertenece :: Nombre -> FS -> Bool
-pertenece = \ n fs -> case fs of {
-  A(s, _) -> n == s;
+pertenece = \n fs -> case fs of {
+  A (s, _) -> n == s;
   C s l -> n == s || perteneceLista n l
 }
 
 perteneceLista :: Nombre -> [FS] -> Bool
-perteneceLista = \ n l -> case l of {
+perteneceLista = \n l -> case l of {
   [] -> False;
   x : xs -> pertenece n x || perteneceLista n xs
 }
+
 ----
 -- 6
 
 valido :: FS -> Bool
-valido = \ fs -> case fs of {
-  A(_, _) -> True;
+valido = \fs -> case fs of {
+  A (_, _) -> True;
   C _ l -> validoLista l
 }
 
 -- Los conflictos se buscan entre hermanos. valido x revisa el interior de cada hijo.
 validoLista :: [FS] -> Bool
-validoLista = \ l -> case l of {
+validoLista = \l -> case l of {
   [] -> True;
   x : xs -> sinConflictoConLista x xs && valido x && validoLista xs
 }
 
 sinConflictoConLista :: FS -> [FS] -> Bool
-sinConflictoConLista = \ x l -> case l of {
+sinConflictoConLista = \x l -> case l of {
   [] -> True;
   y : ys -> sinConflicto x y && sinConflictoConLista x ys
 }
 
 sinConflicto :: FS -> FS -> Bool
-sinConflicto = \ x y -> case (x, y) of {  
-  (A(n1, e1), A(n2, e2)) -> n1 /= n2 || e1 /= e2;
+sinConflicto = \x y -> case (x, y) of {
+  (A (n1, e1), A (n2, e2)) -> n1 /= n2 || e1 /= e2;
   (C s1 _, C s2 _) -> s1 /= s2;
   _ -> True
 }
@@ -145,24 +151,24 @@ sinConflicto = \ x y -> case (x, y) of {
 ----
 -- 7
 archivosExt :: Ext -> FS -> [Nombre]
-archivosExt = \ ext fs -> case fs of {
-  A(s, e) -> case ext == e of {
-      True -> [s];  
-      False -> []
-    };
+archivosExt = \ext fs -> case fs of {
+  A (s, e) -> case ext == e of {
+    True -> [s];
+    False -> []
+  };
   C _ l -> archivosExtLista ext l
-} 
+}
 
 archivosExtLista :: Ext -> [FS] -> [Nombre]
-archivosExtLista = \ ext l -> case l of {
-    [] -> [];
-    x : xs -> archivosExt ext x ++ archivosExtLista ext xs
+archivosExtLista = \ext l -> case l of {
+  [] -> [];
+  x : xs -> archivosExt ext x ++ archivosExtLista ext xs
 };
 
 ----
 -- 8
-cambiarNom :: Nombre -> Nombre -> FS -> FS 
-cambiarNom =  \ viejo nuevo fs -> case fs of {
+cambiarNom :: Nombre -> Nombre -> FS -> FS
+cambiarNom = \viejo nuevo fs -> case fs of {
   A (s, e) -> case s == viejo of {
     True -> A (nuevo, e);
     False -> A (s, e)
@@ -170,19 +176,19 @@ cambiarNom =  \ viejo nuevo fs -> case fs of {
   C s l -> case s == viejo of {
     True -> C nuevo (cambiarNomLista viejo nuevo l);
     False -> C s (cambiarNomLista viejo nuevo l)
-  } 
+  }
 }
 
 cambiarNomLista :: Nombre -> Nombre -> [FS] -> [FS]
-cambiarNomLista = \ viejo nuevo l -> case l of {
+cambiarNomLista = \viejo nuevo l -> case l of {
   [] -> [];
   x : xs -> cambiarNom viejo nuevo x : cambiarNomLista viejo nuevo xs
-} 
+}
 
 ----
 -- 9
 nivelesC :: FS -> Int
-nivelesC = \ fs -> case fs of {
+nivelesC = \fs -> case fs of {
   A (_, _) -> 0;
   C _ l -> case l of {
     [] -> 1;
@@ -191,7 +197,7 @@ nivelesC = \ fs -> case fs of {
 }
 
 nivelesCLista :: [FS] -> Int
-nivelesCLista = \ l -> case l of {
+nivelesCLista = \l -> case l of {
   [] -> 0;
   x : xs -> max (nivelesC x) (nivelesCLista xs)
 }
@@ -199,13 +205,13 @@ nivelesCLista = \ l -> case l of {
 ----
 -- 10
 borrar :: Nombre -> FS -> FS
-borrar = \ n fs -> case fs of {
+borrar = \n fs -> case fs of {
   A (_, _) -> fs;
   C s l -> C s (borrarLista n l)
 }
 
 borrarLista :: Nombre -> [FS] -> [FS]
-borrarLista = \ n l -> case l of {
+borrarLista = \n l -> case l of {
   [] -> [];
   x : xs -> case nombre x == n of {
     True -> borrarLista n xs;
@@ -215,8 +221,29 @@ borrarLista = \ n l -> case l of {
 
 ----
 -- 11
-ordenar :: FS-> FS
-ordenar = undefined
+ordenar :: FS -> FS
+ordenar = \fs -> case fs of {
+  A (n, e) -> fs;
+  C s l -> case l of {
+    [] -> fs;
+    x : xs -> C s (insert (ordenar x) (map ordenar (insertSort xs)))
+  }
+}
+
+insert :: FS -> [FS] -> [FS]
+insert = \e l -> case l of {
+  [] -> [e];
+  x : xs -> case (nombre e) <= (nombre x) of { -- se puede hacer esto con strings?
+    True -> e : l;
+    False -> x : (insert e xs)
+  }
+}
+
+insertSort :: [FS] -> [FS]
+insertSort = \l -> case l of {
+  [] -> [];
+  x : xs -> insert x (insertSort xs)
+}
 
 -------
 --FIN--
