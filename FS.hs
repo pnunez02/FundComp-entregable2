@@ -44,7 +44,7 @@ cmusica = C "musica" [cjazz, crock, A ("clara", Mp3)]
 -- Completar el resto de los componentes del FS
 
 cort :: FS
-cort = C "ort" [cobls,A("Notas",Txt)]
+cort = C "ort" [cobls,A("notas",Txt)]
 
 cobls :: FS
 cobls = C "obls" [A("p2",Txt),A("p2",Jar),A("fc",Hs)]
@@ -53,7 +53,7 @@ csys :: FS
 csys = C "sys" [A("sys",Txt), C "sys" []]
 
 craiz :: FS
-craiz = C "raiz" [cmusica, A("Notas",Txt), cort, csys]
+craiz = C "raiz" [cmusica, A("notas",Txt), cort, csys]
 
 ----
 ext_munuscula :: Ext -> String
@@ -145,15 +145,57 @@ sinConflicto = \ x y -> case (x, y) of {
 ----
 -- 7
 archivosExt :: Ext -> FS -> [Nombre]
-archivosExt = undefined
+archivosExt = \ ext fs -> case fs of {
+  A(s, e) -> case ext == e of {
+      True -> [s];
+      False -> []
+    };
+  C _ l -> archivosExtLista ext l
+}
+
+archivosExtLista :: Ext -> [FS] -> [Nombre]
+archivosExtLista = \ ext l -> case l of {
+    [] -> [];
+    x : xs -> archivosExt ext x ++ archivosExtLista ext xs
+};
+
 ----
 -- 8
 cambiarNom :: Nombre -> Nombre -> FS -> FS 
-cambiarNom = undefined		
+cambiarNom =  \ viejo nuevo fs -> case fs of {
+  A (s, e) -> case s == viejo of {
+    True -> A (nuevo, e);
+    False -> A (s, e)
+  };
+  C s l -> case s == viejo of {
+    True -> C nuevo (cambiarNomLista viejo nuevo l);
+    False -> C s (cambiarNomLista viejo nuevo l)
+  }
+}
+
+cambiarNomLista :: Nombre -> Nombre -> [FS] -> [FS]
+cambiarNomLista = \ viejo nuevo l -> case l of {
+  [] -> [];
+  x : xs -> cambiarNom viejo nuevo x : cambiarNomLista viejo nuevo xs
+}
+
 ----
 -- 9
 nivelesC :: FS -> Int
-nivelesC = undefined	
+nivelesC = \ fs -> case fs of {
+  A (_, _) -> 0;
+  C _ l -> case l of {
+    [] -> 1;
+    x : xs -> 1 + max (nivelesC x) (nivelesCLista xs)
+  }
+}
+
+nivelesCLista :: [FS] -> Int
+nivelesCLista = \ l -> case l of {
+  [] -> 0;
+  x : xs -> max (nivelesC x) (nivelesCLista xs)
+}
+
 ----
 -- 10
 borrar :: Nombre -> FS -> FS 
